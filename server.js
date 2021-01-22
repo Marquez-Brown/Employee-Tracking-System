@@ -28,7 +28,7 @@ connection.connect((err) => {
         type: "list",
         message: "What would you like to do?",
         name: "action",
-        choices: ["View All Employees", "View All Employees By Department", "View All Employees by Manager", "Add Employee", "Remove Employee", "Update Employee", "Update Manager"],
+        choices: ["View All Employees", "View All Employees By Department", "View All Employees by Manager", "Add Employee", "Add Role", "Remove Employee", "Update Employee", "Update Manager"],
       })
       .then(({ action }) => {
           //example of how this works
@@ -37,7 +37,7 @@ connection.connect((err) => {
         // const type = answers.type
         // const {action, type} = answers
         if (action === "View All Employees") {
-          viewAllEmployees()
+          viewAllEmployees()                                    
         } else if (action === "View all Employees By Deparment") {
           bidItem();
         } else if (action === "View All Employees by Manager") {
@@ -45,6 +45,21 @@ connection.connect((err) => {
         }
           else if (action === "View All Employees By Manager") {
             viewAllEmployees()
+          }
+          else if (action === "Add Employee") {
+          addEmployees()
+          }
+          else if (action === "Add Role") {
+            addRole()
+            }
+          else if (action === "Remove Employee") {
+            viewAllEmployees()
+          }
+          else if (action === "Update Employee") {
+              viewAllEmployees()
+          }
+          else if (action === "Update Manager") {
+              viewAllEmployees()
           }
         else {
           exit();
@@ -73,17 +88,17 @@ connection.connect((err) => {
                 let obj = {name: `${emp.first_name} ${emp.last_name}`, value: emp.id} 
                 return obj
             })
+            employeeArray.push({name: "None", value: null})
             return connection.promise().query("SELECT * FROM role;")
         })
         .then(([rows]) => {
-            roleArray = rows.map(role => {
-                let obj = {name: role.title, value: role.id} 
-                return obj
-            })
+            roleArray = rows.map(role => ({name: role.title, value: role.id}))
             return inquirer.prompt([
-                {
-                    name: "role_id", type: "list", message: "Choose role", choices: roleArray
-                }
+                {name: "first_name", type: "input", message: "what is the first name"},
+                {name: "last_name", type: "input", message: "what is the last name"},
+                {name: "role_id", type: "list", message: "Choose role", choices: roleArray},
+                {name: "manager_id", type: "list", message: "Choose Manager", choices: employeeArray}
+                
             ])
         }) 
         .then(answers => {
@@ -93,9 +108,45 @@ connection.connect((err) => {
             console.log("employee added") 
             init()
         })
+        .catch (err => console.log(err))
   }
 
-
+  function addRole() {  
+    let departmentArray;
+  connection.promise().query("SELECT * FROM department")
+      .then(([rows]) => {
+          departmentArray = rows.map(dep => ({name: dep.name, value: dep.id}))
+          return inquirer.prompt([
+              {name: "title", type: "input", message: "what is the title?"},
+              {name: "salary", type: "input", message: "what is the roles salary?"},
+              {name: "department_id", type: "list", message: "Choose department", choices: departmentArray}
+          ])
+      }) 
+      .then(answers => {
+          return connection.promise().query("INSERT INTO role SET ?", answers)
+      })
+      .then(() => {
+          console.log("role added") 
+          init()
+      })
+      .catch (err => console.log(err))
+}
+async function addRole2() {  
+    try {
+        const [rows] = await connection.promise().query("SELECT * FROM department")
+        const departmentArray = rows.map(dep => ({name: dep.name, value: dep.id}))
+        const answers = await inquirer.prompt([
+            {name: "title", type: "input", message: "what is the title?"},
+            {name: "salary", type: "input", message: "what is the roles salary?"},
+            {name: "department_id", type: "list", message: "Choose department", choices: departmentArray}
+        ])
+        await connection.promise().query("INSERT INTO role SET ?", answers)
+        console.log("role added") 
+        init()
+    } catch (err){
+        console.log(err)
+    }
+}
   function bidItem() {
     inquirer.prompt([
       {

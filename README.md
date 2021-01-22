@@ -87,7 +87,6 @@ How do you deliver this? Here are some guidelines:
 
 * The command-line application should allow users to:
 
-  * Add departments, roles, employees
 
   * View departments, roles, employees
 
@@ -136,3 +135,5 @@ You are required to submit the following:
 
 - - -
 © 2019 Trilogy Education Services, a 2U, Inc. brand. All Rights Reserved.
+
+
