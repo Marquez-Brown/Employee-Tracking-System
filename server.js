@@ -28,7 +28,7 @@ function init() {
             type: "list",
             message: "What would you like to do?",
             name: "action",
-            choices: ["View All Employees", "View All Departments", "View All Roles", "Add Employee", "Add Role", "Add Department", "Remove Employee", "Update Employee Role"]
+            choices: ["View All Employees", "View All Departments", "View All Roles", "Add Employee", "Add Role", "Add Department", "Remove Employee", "Update Employee Role", "exit"]
         })
         .then(({ action }) => {
             //example of how this works
@@ -58,9 +58,6 @@ function init() {
             else if (action === "Update Employee Role") {
                 viewAllEmployees()
             }
-            else if (action === "Update Employee Manager") {
-                viewAllEmployees()
-            }
             else {
                 exit();
             }
@@ -80,21 +77,25 @@ function init() {
     }
 
     function viewAllRoles() {
-        connection.promise().query("SELECT * FROM role")
-            .then(([rows]) => {
+        connection.query("SELECT title, salary, department_id FROM role",
+            function (err, rows) {
+                if (err) throw err;
                 console.table(rows);
                 init();
-            })
+            });
     }
 
+   //shows department table
     function viewAllDepartments() {
-        connection.promise().query("SELECT * FROM department;")
-            .then(([rows]) => {
-                console.table(rows);
-                init();
-            })
-    }
 
+        connection.query("SELECT name FROM department",
+            function (err, rows) {
+                if (err) throw err;
+                console.log(rows);
+                init();
+            });
+    }
+    //adds employees
     function addEmployees() {
         let employeeArray;
         let roleArray;
@@ -126,7 +127,7 @@ function init() {
             })
             .catch(err => console.log(err))
     }
-
+    // adds role
     function addRole() {
         let departmentArray;
         connection.promise().query("SELECT * FROM department")
@@ -147,127 +148,17 @@ function init() {
             })
             .catch(err => console.log(err))
     }
-
+    //gotta figure out how o get this working
     function addDepartment() {
-        connection.promise().query("SELECT * FROM department")
-            .then(([rows]) => {
-                // depArray = rows.map(dep => ({ name: dep.name, value: dep.id }))
-                return inquirer.prompt([
-                    { name: "department", type: "input", message: "what department are you adding?" }
-                ])
-            })
-            .then(answers => {
-                return connection.promise().query("INSERT INTO department SET ?", answers)
-            })
-            .then(() => {
-                console.log("department added")
-                init()
-            })
-            .catch(err => console.log(err))
-    }
-    async function addRole2() {
-        try {
-            const [rows] = await connection.promise().query("SELECT * FROM department")
-            const departmentArray = rows.map(dep => ({ name: dep.name, value: dep.id }))
-            const answers = await inquirer.prompt([
-                { name: "title", type: "input", message: "what is the title?" },
-                { name: "salary", type: "input", message: "what is the roles salary?" },
-                { name: "department_id", type: "list", message: "Choose department", choices: departmentArray }
-            ])
-            await connection.promise().query("INSERT INTO role SET ?", answers)
-            console.log("role added")
-            init()
-        } catch (err) {
-            console.log(err)
-        }
-    }
-    function bidItem() {
         inquirer.prompt([
-            {
-                type: "input",
-                message: "What are you bidding on?",
-                name: "item"
-            },
-            {
-                type: "input",
-                message: "How much is the starting bidding price?",
-                name: "bid"
-            },
-            {
-                type: "input",
-                message: "what category is this item in",
-                name: "category"
-            }
-        ]).then(response => {
-            connection.query("INSERT INTO auction SET ?", response, (err, data) => {
-                if (err) throw err;
-                if (data.affectedRows > 0) {
-                    console.log("Bid inserted successfully!");
-                }
-                init();
-            })
-        })
-        function postItem() {
-            inquirer.prompt([
-                {
-                    type: "input",
-                    message: "What are you posting?",
-                    name: "item"
-                },
-                {
-                    type: "input",
-                    message: "How much is the starting price?",
-                    name: "bid"
-                },
-                {
-                    type: "input",
-                    message: "what category is this item in",
-                    name: "category"
-                }
-            ]).then(response => {
-                connection.query("INSERT INTO auction SET ?", response, (err, data) => {
-                    if (err) throw err;
-                    if (data.affectedRows > 0) {
-                        console.log("Post inserted successfully!");
-                    }
-                    init();
-                })
-            })
-            // connection.query(
-            //   `INSERT INTO songs(title, artist, genre) VALUES ("Achy, Breaky, Heart", "Billy Ray Cyrus", "Country");`,
-            //   (err, data) => {
-            //     if (err) throw err;
-            //     console.log(data);
-            //     if (data.affectedRows > 0) {
-            //       console.log("Song inserted successfully.");
-            //     }
-            //     init();
-            //   }
-            // );
+            { name: "department", type: "input", message: "what department are you adding?" }
+        ])
+            .then((answers) => {
+                connection.promise().query("INSERT INTO department ?", answers)
+                    .then(() => {
+                        console.log("department added")
+                        init()
+                    })
+                    .catch(err => console.log(err))
+            })}
         }
-
-        function readGenre(genreToSearch) {
-            connection.query(
-                `SELECT * FROM auction WHERE category = ?;`,
-                [genreToSearch],
-                (err, data) => {
-                    if (err) throw err;
-                    console.table(data);
-                    connection.end();
-                }
-            );
-        }
-
-        function readArtist(artistToSearch) {
-            connection.query(
-                `SELECT * FROM songs WHERE artist = ?;`,
-                [artistToSearch],
-                (err, data) => {
-                    if (err) throw err;
-                    console.table(data);
-                    connection.end();
-                }
-            );
-        }
-    }
-};
